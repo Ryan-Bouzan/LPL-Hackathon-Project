@@ -97,8 +97,9 @@ def display_news(list_of_news, news_quantity):
 
 
 def run():
-    st.title("InNews🇮🇳: A Summarised News📰")
-    image = Image.open('./test_image.png')
+    st.title("Cyberdefenders: The best place to get your news")
+    st.header("Your header")
+    image = Image.open('finnews1.jpeg')
 
     col1, col2, col3 = st.columns([3, 5, 3])
 

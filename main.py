@@ -15,5 +15,5 @@ if __name__ == '__main__':
     print("test commit")
     print_hi('PyCharm')
     print_hi('PyCharm')
-
+    print("Elijah is cool")
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

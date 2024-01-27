@@ -8,9 +8,9 @@ from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
 from newspaper import Article
 import io
+import ssl
 import nltk
 nltk.download('punkt')
-import ssl
 
 # Disable SSL certificate verification
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -19,6 +19,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_news(topics):
+    nltk.download('punkt')
+
     sites_data = []
     for topic in topics:
         site = 'https://news.google.com/news/rss/headlines/section/topic/{}'.format(topic)
@@ -27,18 +29,29 @@ def get_news(topics):
         rd = op.read()  # read data from site
         op.close()  # close the object
         sites_data.append(rd)
-        items_data = []
+        titles = []
+        summaries = []
         for item in sites_data:
             sp_page = soup(item, 'xml')  # scrapping data from site
 
             temp = sp_page.find_all('item')[:5]
             for element in temp:
-                items_data.append(element.find('title').text)
+                titles.append(element.find('title').text)
+                data = Article(element.find('link').text)
+                try:
+                    data.download()
+                    data.parse()
+                    data.nlp()
+                except Exception as e:
+                    print(e)
+                summaries.append(data.summary)
 
         sites_data = []
-        for item in items_data:
-            print(item)
+        for i in range(len(titles)):
+            print(titles[i])
+            print(summaries[i])
             print("\n")
+
 
 def run():
 

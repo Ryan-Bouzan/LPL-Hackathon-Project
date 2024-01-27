@@ -96,60 +96,135 @@ def display_news(list_of_news, news_quantity):
             break
 
 
+def set_custom_style():
+    custom_style = """
+        <style>
+            /* Use Comic Sans MS as the font */
+            body {
+                font-family: 'Comic Sans', sans-serif;
+            }
+            /* Additional styling if needed */
+            h1 {
+                color: blue;
+            }
+        </style>
+    """
+    st.markdown(custom_style, unsafe_allow_html=True)
 def run():
-    st.title("Cyberdefenders: The Best Place To Get Your Financial News")
-    st.header("Stay Up to Date")
-    image = Image.open('finnews1.jpeg')
+    set_custom_style()
+    st.title("CYBER DEFENDERS NEWS: The Best Place To Get Your News")
+    st.header("Stay Up to Date On The Latest Financial, Technology, and Business Events")
+    image = Image.open("finnews2.jpeg")
+    st.image(image, caption="Wall Street with Money", use_column_width=True)
+
+    import yfinance as yf
+    from datetime import datetime, timedelta
+
+    def get_stock_data(ticker, period="1d", interval="1m"):
+        # Function to fetch stock data using yfinance
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=1)  # Fetch data for the last day
+        stock_data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
+        return stock_data
+
+    def run():
+        st.title("Live Stock Chart")
+
+        # User input for stock symbol
+        stock_ticker = st.text_input("Enter stock ticker symbol (e.g., AAPL):", "AAPL")
+
+        # Fetch stock data based on user input
+        stock_data = get_stock_data(stock_ticker)
+
+        # Display the live stock chart
+        st.line_chart(stock_data['Close'])
+
+    if __name__ == "__main__":
+        run()
+
+    from streamlit.state.session_state import SessionState
+
+    # Function to initialize session state variables
+    def init_session():
+        return SessionState.get(read_list=[])
+
+    # Function to add items to the read list
+    def add_to_read_list(item, session_state):
+        session_state.read_list.append(item)
+
+    def run():
+        # Initialize session state
+        session_state = init_session()
+
+        st.title("Read List App")
+
+        # User input for the item to add to the read list
+        new_item = st.text_input("Enter item for your read list:", "")
+
+        # Button to add the item to the read list
+        if st.button("Add to Read List"):
+            if new_item:
+                add_to_read_list(new_item, session_state)
+
+        # Display the current read list
+        st.header("Your Read List:")
+        for item in session_state.read_list:
+            st.write(f"- {item}")
+
+    if __name__ == "__main__":
+        run()
 
     col1, col2, col3 = st.columns([3, 5, 3])
 
     with col1:
         st.write("")
 
-    with col2:
-        st.image(image, use_column_width=False)
+    # with col2:
+        #st.image(image, use_column_width=False)
 
-    with col3:
-        st.write("")
-    category = ['--Select--', 'Trending🔥 News', 'Favourite💙 Topics', 'Search🔍 Topic']
-    cat_op = st.selectbox('Select your Category', category)
-    if cat_op == category[0]:
-        st.warning('Please select Type!!')
-    elif cat_op == category[1]:
-        st.subheader("✅ Here is the Trending🔥 news for you")
-        no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
-        news_list = fetch_top_news()
-        display_news(news_list, no_of_news)
-    elif cat_op == category[2]:
-        av_topics = ['Choose Topic', 'WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE',
-                     'HEALTH']
-        st.subheader("Choose your favourite Topic")
-        chosen_topic = st.selectbox("Choose your favourite Topic", av_topics)
-        if chosen_topic == av_topics[0]:
-            st.warning("Please Choose the Topic")
-        else:
-            no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
-            news_list = fetch_category_news(chosen_topic)
-            if news_list:
-                st.subheader("✅ Here are the some {} News for you".format(chosen_topic))
-                display_news(news_list, no_of_news)
-            else:
-                st.error("No News found for {}".format(chosen_topic))
 
-    elif cat_op == category[3]:
-        user_topic = st.text_input("Enter your Topic🔍")
-        no_of_news = st.slider('Number of News:', min_value=5, max_value=15, step=1)
+        #with col3:
+    #    st.write("")
+    #category = ['--Select--', 'Trending News', 'Business News', 'World News']
+    #cat_op = st.selectbox('Select your Category', category)
+    #if cat_op == category[0]:
+    #     st.warning('Please select Type!!')
+    # elif cat_op == category[1]:
+    #     st.subheader("✅ Here is the Trending🔥 news for you")
+    #     no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
+    #     news_list = fetch_top_news()
+    #     display_news(news_list, no_of_news)
+    # elif cat_op == category[2]:
+    #     av_topics = ['Choose Topic', 'WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE',
+    #                  'HEALTH']
+    #     st.subheader("Choose your favourite Topic")
+    #     chosen_topic = st.selectbox("Choose your favourite Topic", av_topics)
+    #     if chosen_topic == av_topics[0]:
+    #         st.warning("Please Choose the Topic")
+    #     else:
+    #         no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
+    #         news_list = fetch_category_news(chosen_topic)
+    #         if news_list:
+    #             st.subheader("✅ Here are the some {} News for you".format(chosen_topic))
+    #             display_news(news_list, no_of_news)
+    #         else:
+    #             st.error("No News found for {}".format(chosen_topic))
+    #
+    # elif cat_op == category[3]:
+    #     user_topic = st.text_input("Enter your Topic🔍")
+    #     no_of_news = st.slider('Number of News:', min_value=5, max_value=15, step=1)
 
-        if st.button("Search") and user_topic != '':
-            user_topic_pr = user_topic.replace(' ', '')
-            news_list = fetch_news_search_topic(topic=user_topic_pr)
-            if news_list:
-                st.subheader("✅ Here are the some {} News for you".format(user_topic.capitalize()))
-                display_news(news_list, no_of_news)
-            else:
-                st.error("No News found for {}".format(user_topic))
-        else:
-            st.warning("Please write Topic Name to Search🔍")
+        # if st.button("Search") and user_topic != '':
+        #     user_topic_pr = user_topic.replace(' ', '')
+        #     news_list = fetch_news_search_topic(topic=user_topic_pr)
+        #     if news_list:
+        #         st.subheader("✅ Here are the some {} News for you".format(user_topic.capitalize()))
+        #         display_news(news_list, no_of_news)
+        #     else:
+        #         st.error("No News found for {}".format(user_topic))
+        # else:
+        #     st.warning("Please write Topic Name to Search🔍")
+
 
 
 run()

@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 from PIL import Image
 from bs4 import BeautifulSoup as soup
@@ -9,10 +7,13 @@ import io
 import nltk
 import yfinance as yf
 from datetime import datetime, timedelta
+from dateutil.parser import parse
+
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 nltk.download('punkt')
+
 
 
 #st.set_page_config(page_title='InNews🇮🇳: A Summarised News📰 Portal', page_icon='./Meta/newspaper.ico')
@@ -92,14 +93,35 @@ def set_custom_style():
             }
             /* Additional styling if needed */
             h1 {
-                color: blue;
+                color: pink;
             }
         </style>
     """
     st.markdown(custom_style, unsafe_allow_html=True)
 
+def is_time_within_six_hours(current_time_str, other_time_str):
+    """
+    Evaluate if another time is within 6 hours of the current time.
+
+    Parameters:
+    - current_time_str: A string representing the current time (format: 'Sat, 27 Jan 2024 12:23:02 GMT').
+    - other_time_str: A string representing the other time (format: 'Sat, 27 Jan 2024 12:23:02 GMT').
+
+    Returns:
+    - True if the other time is within 6 hours of the current time, False otherwise.
+    """
+    current_time = parse(current_time_str)
+    other_time = parse(other_time_str)
+
+    # Calculate the time difference
+    time_difference = abs(current_time - other_time)
+
+    # Check if the time difference is within 6 hours
+    return time_difference <= timedelta(hours=6)
+
+
 def get_news(topics):
-        nltk.download('punkt')
+        #nltk.download('punkt')
 
         sites_data = []
         for topic in topics:
@@ -109,14 +131,19 @@ def get_news(topics):
             rd = op.read()  # read data from site
             op.close()  # close the object
             sites_data.append(rd)
+            all_data = []
             titles = []
+            dates = []
             summaries = []
+            links = []
+            valid_article = True
             for item in sites_data:
                 sp_page = soup(item, 'xml')  # scrapping data from site
 
                 temp = sp_page.find_all('item')[:5]
                 for element in temp:
-                    titles.append(element.find('title').text)
+                    valid_article = True
+
                     data = Article(element.find('link').text)
                     try:
                         data.download()
@@ -124,27 +151,53 @@ def get_news(topics):
                         data.nlp()
                     except Exception as e:
                         print(e)
-                    summaries.append(data.summary)
+                        valid_article = False
+
+                    if valid_article:
+                        titles.append(element.find('title').text)
+                        dates.append(element.find('pubDate').text)
+                        summaries.append(data.summary)
+                        links.append(element.find('link').text)
 
             sites_data = []
-            for i in range(len(titles)):
-                print(titles[i])
-                print(summaries[i])
-                print("\n")
+            if valid_article:
+                all_data.append(titles)
+                all_data.append(dates)
+                all_data.append(summaries)
+                all_data.append(links)
+                show_data(topic, all_data)
 
+def show_data(topic, data_list):
+    #titles, dates, summaries is expected format
+    topicText = f"<div style='font-size: 60px;'>{topic}</div>"
+    st.markdown(topicText, unsafe_allow_html=True)
+    st.markdown("<hr style='border: 4px solid pink;'>", unsafe_allow_html=True)
+
+    for i in range(len(data_list[0])):
+        st.write(f"<a href='{data_list[3][i]}' style='font-size: 40px;'>{data_list[0][i]}'</a>", unsafe_allow_html=True)
+        timestamp =  parse(data_list[1][i])
+        short_time = timestamp.strftime('%a, %d %b %Y')
+        if is_time_within_six_hours(datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT'), data_list[1][i]):
+            data_list[1][i] = "*RECENT* " + short_time
+            st.subheader(data_list[1][i])
+
+        else:
+            st.subheader(short_time)
+
+        styled_text = f"<div style='margin: auto; text-align: center; 20px;'>{data_list[2][i]}</div>"
+        if not data_list[2][i]:
+            data_list[2][i] = "Sorry, no summary is available for this article."
+        st.markdown(data_list[2][i])
+        st.markdown("<hr style='border: 2px solid pink;'>", unsafe_allow_html=True)
 
 
 def run():
     # Initialize session state
 
-    st.title("Read List App")
-
-    # User input for the item to add to the read list
-    new_item = st.text_input("Enter item for your read list:", "")
 
 
-    topics = ['BUSINESS', 'WORLD', 'TECHNOLOGY']
-    get_news(topics)
+
+
     set_custom_style()
     st.title("CYBER DEFENDERS NEWS: The Best Place To Get Your News")
     st.header("Stay Up to Date On The Latest Financial, Technology, and Business Events")
@@ -162,6 +215,13 @@ def run():
     # Display the live stock chart
     st.line_chart(stock_data['Close'])
 
+    topics = ['BUSINESS', 'WORLD', 'TECHNOLOGY']
+    get_news(topics)
+
+    st.title("Read List App")
+
+    # User input for the item to add to the read list
+    new_item = st.text_input("Enter item for your read list:", "")
 
 def get_stock_data(ticker, period="1d", interval="1m"):
     # Function to fetch stock data using yfinance
@@ -169,59 +229,6 @@ def get_stock_data(ticker, period="1d", interval="1m"):
     start_date = end_date - timedelta(days=1)  # Fetch data for the last day
     stock_data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
     return stock_data
-
-
-
-# Function to initialize session state variables
-
-
-
-    # with col2:
-        #st.image(image, use_column_width=False)
-
-
-        #with col3:
-    #    st.write("")
-    #category = ['--Select--', 'Trending News', 'Business News', 'World News']
-    #cat_op = st.selectbox('Select your Category', category)
-    #if cat_op == category[0]:
-    #     st.warning('Please select Type!!')
-    # elif cat_op == category[1]:
-    #     st.subheader("✅ Here is the Trending🔥 news for you")
-    #     no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
-    #     news_list = fetch_top_news()
-    #     display_news(news_list, no_of_news)
-    # elif cat_op == category[2]:
-    #     av_topics = ['Choose Topic', 'WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE',
-    #                  'HEALTH']
-    #     st.subheader("Choose your favourite Topic")
-    #     chosen_topic = st.selectbox("Choose your favourite Topic", av_topics)
-    #     if chosen_topic == av_topics[0]:
-    #         st.warning("Please Choose the Topic")
-    #     else:
-    #         no_of_news = st.slider('Number of News:', min_value=5, max_value=25, step=1)
-    #         news_list = fetch_category_news(chosen_topic)
-    #         if news_list:
-    #             st.subheader("✅ Here are the some {} News for you".format(chosen_topic))
-    #             display_news(news_list, no_of_news)
-    #         else:
-    #             st.error("No News found for {}".format(chosen_topic))
-    #
-    # elif cat_op == category[3]:
-    #     user_topic = st.text_input("Enter your Topic🔍")
-    #     no_of_news = st.slider('Number of News:', min_value=5, max_value=15, step=1)
-
-        # if st.button("Search") and user_topic != '':
-        #     user_topic_pr = user_topic.replace(' ', '')
-        #     news_list = fetch_news_search_topic(topic=user_topic_pr)
-        #     if news_list:
-        #         st.subheader("✅ Here are the some {} News for you".format(user_topic.capitalize()))
-        #         display_news(news_list, no_of_news)
-        #     else:
-        #         st.error("No News found for {}".format(user_topic))
-        # else:
-        #     st.warning("Please write Topic Name to Search🔍")
-
 
 
 run()

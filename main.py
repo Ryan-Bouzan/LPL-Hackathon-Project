@@ -1,22 +1,4 @@
-# This is a sample Python script.
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-    print("test commit")
-    print_hi('PyCharm')
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 import streamlit as st
 from PIL import Image
@@ -25,6 +7,11 @@ from urllib.request import urlopen
 from newspaper import Article
 import io
 import nltk
+import yfinance as yf
+from datetime import datetime, timedelta
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 nltk.download('punkt')
 
 
@@ -110,74 +97,84 @@ def set_custom_style():
         </style>
     """
     st.markdown(custom_style, unsafe_allow_html=True)
+
+def get_news(topics):
+        nltk.download('punkt')
+
+        sites_data = []
+        for topic in topics:
+            site = 'https://news.google.com/news/rss/headlines/section/topic/{}'.format(topic)
+            print("Current topic: " + topic)
+            op = urlopen(site)  # Open that site
+            rd = op.read()  # read data from site
+            op.close()  # close the object
+            sites_data.append(rd)
+            titles = []
+            summaries = []
+            for item in sites_data:
+                sp_page = soup(item, 'xml')  # scrapping data from site
+
+                temp = sp_page.find_all('item')[:5]
+                for element in temp:
+                    titles.append(element.find('title').text)
+                    data = Article(element.find('link').text)
+                    try:
+                        data.download()
+                        data.parse()
+                        data.nlp()
+                    except Exception as e:
+                        print(e)
+                    summaries.append(data.summary)
+
+            sites_data = []
+            for i in range(len(titles)):
+                print(titles[i])
+                print(summaries[i])
+                print("\n")
+
+
+
 def run():
+    # Initialize session state
+
+    st.title("Read List App")
+
+    # User input for the item to add to the read list
+    new_item = st.text_input("Enter item for your read list:", "")
+
+
+    topics = ['BUSINESS', 'WORLD', 'TECHNOLOGY']
+    get_news(topics)
     set_custom_style()
     st.title("CYBER DEFENDERS NEWS: The Best Place To Get Your News")
     st.header("Stay Up to Date On The Latest Financial, Technology, and Business Events")
     image = Image.open("finnews2.jpeg")
     st.image(image, caption="Wall Street with Money", use_column_width=True)
 
-    import yfinance as yf
-    from datetime import datetime, timedelta
+    st.title("Live Stock Chart")
 
-    def get_stock_data(ticker, period="1d", interval="1m"):
-        # Function to fetch stock data using yfinance
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=1)  # Fetch data for the last day
-        stock_data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
-        return stock_data
+    # User input for stock symbol
+    stock_ticker = st.text_input("Enter stock ticker symbol (e.g., AAPL):", "AAPL")
 
-    def run():
-        st.title("Live Stock Chart")
+    # Fetch stock data based on user input
+    stock_data = get_stock_data(stock_ticker)
 
-        # User input for stock symbol
-        stock_ticker = st.text_input("Enter stock ticker symbol (e.g., AAPL):", "AAPL")
+    # Display the live stock chart
+    st.line_chart(stock_data['Close'])
 
-        # Fetch stock data based on user input
-        stock_data = get_stock_data(stock_ticker)
 
-        # Display the live stock chart
-        st.line_chart(stock_data['Close'])
+def get_stock_data(ticker, period="1d", interval="1m"):
+    # Function to fetch stock data using yfinance
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=1)  # Fetch data for the last day
+    stock_data = yf.download(ticker, start=start_date, end=end_date, interval=interval, progress=False)
+    return stock_data
 
-    if __name__ == "__main__":
-        run()
 
-    from streamlit.state.session_state import SessionState
 
-    # Function to initialize session state variables
-    def init_session():
-        return SessionState.get(read_list=[])
+# Function to initialize session state variables
 
-    # Function to add items to the read list
-    def add_to_read_list(item, session_state):
-        session_state.read_list.append(item)
 
-    def run():
-        # Initialize session state
-        session_state = init_session()
-
-        st.title("Read List App")
-
-        # User input for the item to add to the read list
-        new_item = st.text_input("Enter item for your read list:", "")
-
-        # Button to add the item to the read list
-        if st.button("Add to Read List"):
-            if new_item:
-                add_to_read_list(new_item, session_state)
-
-        # Display the current read list
-        st.header("Your Read List:")
-        for item in session_state.read_list:
-            st.write(f"- {item}")
-
-    if __name__ == "__main__":
-        run()
-
-    col1, col2, col3 = st.columns([3, 5, 3])
-
-    with col1:
-        st.write("")
 
     # with col2:
         #st.image(image, use_column_width=False)

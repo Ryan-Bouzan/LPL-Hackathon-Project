@@ -22,7 +22,7 @@ def get_news(topics):
     sites_data = []
     for topic in topics:
         site = 'https://news.google.com/news/rss/headlines/section/topic/{}'.format(topic)
-        print(site)
+        print("Current topic: " + topic)
         op = urlopen(site)  # Open that site
         rd = op.read()  # read data from site
         op.close()  # close the object
@@ -31,11 +31,15 @@ def get_news(topics):
     items_data = []
     for item in sites_data:
         sp_page = soup(item, 'xml')  # scrapping data from site
-        items_data.append(sp_page.find_all('item')[:5])
+
+        temp = sp_page.find_all('item')[:5]
+        for element in temp:
+            items_data.append(element.find('title').text)
 
     for item in items_data:
-        print(item.title.text)
+        print(item)
         print("\n")
+
 def run():
 
 

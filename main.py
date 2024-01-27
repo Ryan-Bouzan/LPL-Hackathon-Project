@@ -14,8 +14,21 @@ if __name__ == '__main__':
     print_hi('PyCharm')
     print("test commit")
     print_hi('PyCharm')
+    print_hi('PyCharm')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+import streamlit as st
+from PIL import Image
+from bs4 import BeautifulSoup as soup
+from urllib.request import urlopen
+from newspaper import Article
+import io
+import nltk
+nltk.download('punkt')
+
+st.set_page_config(page_title='InNews🇮🇳: A Summarised News📰 Portal', page_icon='./Meta/newspaper.ico')
+
 
 def fetch_news_search_topic(topic):
     site = 'https://news.google.com/rss/search?q={}'.format(topic)
@@ -26,6 +39,7 @@ def fetch_news_search_topic(topic):
     news_list = sp_page.find_all('item')  # finding news
     return news_list
 
+
 def fetch_top_news():
     site = 'https://news.google.com/news/rss'
     op = urlopen(site)  # Open that site
@@ -35,6 +49,7 @@ def fetch_top_news():
     news_list = sp_page.find_all('item')  # finding news
     return news_list
 
+
 def fetch_category_news(topic):
     site = 'https://news.google.com/news/rss/headlines/section/topic/{}'.format(topic)
     op = urlopen(site)  # Open that site
@@ -43,6 +58,7 @@ def fetch_category_news(topic):
     sp_page = soup(rd, 'xml')  # scrapping data from site
     news_list = sp_page.find_all('item')  # finding news
     return news_list
+
 
 def fetch_news_poster(poster_link):
     try:

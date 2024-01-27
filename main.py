@@ -27,18 +27,18 @@ def get_news(topics):
         rd = op.read()  # read data from site
         op.close()  # close the object
         sites_data.append(rd)
+        items_data = []
+        for item in sites_data:
+            sp_page = soup(item, 'xml')  # scrapping data from site
 
-    items_data = []
-    for item in sites_data:
-        sp_page = soup(item, 'xml')  # scrapping data from site
+            temp = sp_page.find_all('item')[:5]
+            for element in temp:
+                items_data.append(element.find('title').text)
 
-        temp = sp_page.find_all('item')[:5]
-        for element in temp:
-            items_data.append(element.find('title').text)
-
-    for item in items_data:
-        print(item)
-        print("\n")
+        sites_data = []
+        for item in items_data:
+            print(item)
+            print("\n")
 
 def run():
 

@@ -14,76 +14,6 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 nltk.download('punkt')
 
-
-
-#st.set_page_config(page_title='InNews🇮🇳: A Summarised News📰 Portal', page_icon='./Meta/newspaper.ico')
-
-
-def fetch_news_search_topic(topic):
-    site = 'https://news.google.com/rss/search?q={}'.format(topic)
-    op = urlopen(site)  # Open that site
-    rd = op.read()  # read data from site
-    op.close()  # close the object
-    sp_page = soup(rd, 'xml')  # scrapping data from site
-    news_list = sp_page.find_all('item')  # finding news
-    return news_list
-
-
-def fetch_top_news():
-    site = 'https://news.google.com/news/rss'
-    op = urlopen(site)  # Open that site
-    rd = op.read()  # read data from site
-    op.close()  # close the object
-    sp_page = soup(rd, 'xml')  # scrapping data from site
-    news_list = sp_page.find_all('item')  # finding news
-    return news_list
-
-
-def fetch_category_news(topic):
-    site = 'https://news.google.com/news/rss/headlines/section/topic/{}'.format(topic)
-    op = urlopen(site)  # Open that site
-    rd = op.read()  # read data from site
-    op.close()  # close the object
-    sp_page = soup(rd, 'xml')  # scrapping data from site
-    news_list = sp_page.find_all('item')  # finding news
-    return news_list
-
-
-def fetch_news_poster(poster_link):
-    try:
-        u = urlopen(poster_link)
-        raw_data = u.read()
-        image = Image.open(io.BytesIO(raw_data))
-        st.image(image, use_column_width=True)
-    except:
-        image = Image.open('./test_image.png')
-        st.image(image, use_column_width=True)
-
-
-def display_news(list_of_news, news_quantity):
-    c = 0
-    for news in list_of_news:
-        c += 1
-        # st.markdown(f"({c})[ {news.title.text}]({news.link.text})")
-        st.write('**({}) {}**'.format(c, news.title.text))
-        news_data = Article(news.link.text)
-        try:
-            news_data.download()
-            news_data.parse()
-            news_data.nlp()
-        except Exception as e:
-            st.error(e)
-        fetch_news_poster(news_data.top_image)
-        with st.expander(news.title.text):
-            st.markdown(
-                '''<h6 style='text-align: justify;'>{}"</h6>'''.format(news_data.summary),
-                unsafe_allow_html=True)
-            st.markdown("[Read more at {}...]({})".format(news.source.text, news.link.text))
-        st.success("Published Date: " + news.pubDate.text)
-        if c >= news_quantity:
-            break
-
-
 def set_custom_style():
     custom_style = """
         <style>
@@ -120,6 +50,10 @@ def is_time_within_six_hours(current_time_str, other_time_str):
     return time_difference <= timedelta(hours=6)
 
 
+# Main function responsible for posting a request to the google news site.
+# Uses beautiful soup 4 to parse the xml obtained from the request, extracts title, date, link, and summary
+# Creates a 2D list of these categories, which is sent as an argument to the show_data function which handles
+# populating the UI elememnts.
 def get_news(topics):
         #nltk.download('punkt')
 
@@ -138,7 +72,7 @@ def get_news(topics):
             links = []
             valid_article = True
             for item in sites_data:
-                sp_page = soup(item, 'xml')  # scrapping data from site
+                sp_page = soup(item, 'xml')  # scraping data from site
 
                 temp = sp_page.find_all('item')[:5]
                 for element in temp:
@@ -167,6 +101,11 @@ def get_news(topics):
                 all_data.append(links)
                 show_data(topic, all_data)
 
+
+# Using a loop, the top 5 articles from each category are shown as they are passed by the calling function
+# In order to enhance responsiveness, the function is designed so only one category is displayed at a time
+# This minimizes loading time for the user and helps keep them engaged.
+# Streamlit markdown calls are used to implement basic html styling options, giving the UI a more refined look
 def show_data(topic, data_list):
     #titles, dates, summaries is expected format
     topicText = f"<div style='font-size: 60px;'>{topic}</div>"
@@ -192,12 +131,6 @@ def show_data(topic, data_list):
 
 
 def run():
-    # Initialize session state
-
-
-
-
-
     set_custom_style()
     st.title("CYBER DEFENDERS NEWS: The Best Place To Get Your News")
     st.header("Stay Up to Date On The Latest Financial, Technology, and Business Events")
@@ -215,6 +148,7 @@ def run():
     # Display the live stock chart
     st.line_chart(stock_data['Close'])
 
+    # topics are hard coded at this time.
     topics = ['BUSINESS', 'WORLD', 'TECHNOLOGY']
     get_news(topics)
 
@@ -222,7 +156,6 @@ def run():
 
     # User input for the item to add to the read list
     new_item = st.text_input("Enter item for your read list:", "")
-
 def get_stock_data(ticker, period="1d", interval="1m"):
     # Function to fetch stock data using yfinance
     end_date = datetime.now()
